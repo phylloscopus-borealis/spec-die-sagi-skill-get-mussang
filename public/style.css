@@ -1,0 +1,314 @@
+@font-face {
+    font-family: 'Cafe24ClassicType';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2210-2@1.0/Cafe24ClassicType-Regular.woff2') format('woff2');
+    font-weight: normal;
+    font-display: swap;
+}
+
+/* ===== 컬러 팔레트 (통일) ===== */
+:root {
+    --color-primary: #5a0283;       /* 진보라 - 헤더 */
+    --color-primary-soft: #7c3aed;  /* 연보라 - 보조 강조 */
+    --color-accent: #2f1896;        /* 마젠타 - 포커스/보더 */
+    --color-grad-start: #2c77e7;    /* 그라데이션 시작 (파랑) */
+    --color-grad-end: #5934af;      /* 그라데이션 끝 (보라) */
+    --color-bg-start: #f2f0fa;
+    --color-bg-end: #c8e1e9;
+}
+
+/* ===== 기본 레이아웃 ===== */
+body {
+    background: linear-gradient(to right, var(--color-bg-start), var(--color-bg-end));
+    color: #111827;
+    padding: 1.5rem;
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    margin: 0;  
+}
+ 
+header {
+    margin-bottom: 2rem;
+}
+
+header h1 {
+    font-family: 'Cafe24ClassicType', cursive;
+    color: var(--color-primary);
+    font-size: 2rem;  
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ===== 화면 전환 (검색 화면 ↔ 비교 화면) ===== */
+.view {
+    animation: fadeIn 0.35s ease;
+}
+
+.view.hidden {
+    display: none;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.search-view-wrap {
+    max-width: 40rem;
+    margin: 3rem auto 0;
+}
+
+.btn-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background-color: #ffffff;
+    color: var(--color-grad-end);
+    border: 1px solid #e5e7eb;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    font-size: 0.875rem;
+    cursor: pointer;
+    margin-bottom: 1.25rem;
+    max-width: 72rem;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.btn-back-row {
+    max-width: 72rem;
+    margin: 0 auto 1rem;
+}
+
+.btn-back:hover {
+    background-color: #f3e8fd;
+}
+
+main {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    max-width: 72rem;
+    margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+    main {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.col {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ===== 카드 공통 ===== */
+.card {
+    background-color: #ffffff;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+.card h2 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--color-primary);
+}
+
+/* ===== 모델 선택 ===== */
+.model-select-wrap {
+    margin-bottom: 1rem;
+}
+
+.model-select-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #6b7280;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.model-select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    background-color: #f9fafb;
+    font-weight: 500;
+}
+
+.model-select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+/* ===== 검색 입력 ===== */
+.search-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    outline: none;
+}
+
+.search-input:focus {
+    box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.btn-submit {
+    background: linear-gradient(to right, var(--color-grad-start), var(--color-grad-end));
+    color: #ffffff;
+    padding: 0 1.25rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: filter 0.2s ease, opacity 0.2s ease;
+}
+
+.btn-submit:hover {
+    filter: brightness(0.92);
+}
+
+.btn-submit:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.loading-text {
+    font-size: 0.875rem;
+    color: var(--color-grad-end);
+    margin-top: 0.5rem;
+}
+
+.hidden {
+    display: none;
+}
+
+/* ===== 가중치 슬라이더 ===== */
+.weight-block + .weight-block {
+    margin-top: 1rem;
+}
+
+.weight-block-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.weight-label-row {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+}
+
+.weight-value {
+    color: var(--color-grad-end);
+    font-weight: 700;
+}
+
+.weight-slider {
+    width: 100%;
+    cursor: pointer;
+    accent-color: var(--color-accent);
+}
+
+/* ===== 차트 카드 ===== */
+.chart-card {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 380px;
+}
+
+/* ===== 랭킹 리스트 ===== */
+.ranking-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.ranking-section h2 {
+    color: var(--color-primary);
+}
+
+.ranking-placeholder {
+    color: #9ca3af;
+    font-size: 0.875rem;
+}
+
+.ranking-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.rank-card {
+    background-color: #ffffff;
+    padding: 1.25rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    border-left: 4px solid var(--color-grad-end);
+}
+
+.rank-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.rank-card-title {
+    font-size: 1.125rem;
+    color: #1f2937;
+}
+
+.rank-card-score {
+    background-color: #f3e8fd;
+    color: var(--color-primary-soft);
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+}
+
+.rank-card-reason {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.75rem;
+    background-color: #f9fafb;
+    padding: 0.625rem;
+    border-radius: 0.5rem;
+}
+
+.rank-card-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.875rem;
+    color: #374151;
+}
+
+.icon-pro {
+    color: #10b981;
+    font-weight: 700;
+}
+
+.icon-con {
+    color: #f43f5e;
+    font-weight: 700;
+}
