@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> 뭘 고를지 9시간째 고민하던 나, AI가 그려주는 레이더 차트가 실시간으로 보이는 사기 스킬을 얻고 무쌍 찍는 건에 대하여 </title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="search-mode">
+
+    <header>
+        <img src="logo.png" alt="서비스 로고" class="main-logo">
+        <h1>뭘 고를지 9시간째 고민하던 나, <a class="highlight1">AI가 그려주는 레이더 차트가</a> 실시간으로 보이는 <a class="highlight2">사기 스킬</a>을 얻고 무쌍 찍는 건에 대하여</h1>
+    </header>
+
+    <section id="view-search" class="view">
+        <div class="search-view-wrap">
+            <div class="card">
+                <h2>어떤 것을 비교해 드릴까요?</h2>
+
+                <div class="search-row">
+                    <input type="text" id="search-query" value="150만원 이하 노트북 3개 비교해줘" class="search-input">
+                    <button onclick="fetchAiData()" id="btn-submit" class="btn-submit">AI 연성</button>
+                </div>
+                <p id="loading-text" class="loading-text hidden">Gemini가 이세계 스펙을 연성하는 중...</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="view-result" class="view hidden">
+        <div class="btn-back-row">
+            <button id="btn-back" class="btn-back" onclick="showSearchView()">← 다시 AI 연성하기</button>
+        </div>
+
+        <main>
+            <div class="col">
+                <div class="card">
+                    <h2>가중치 설정</h2>
+                    <div class="weight-block-list">
+                        <div class="weight-block">
+                            <div class="weight-label-row"><span>가격 · 비용</span><span id="val-price" class="weight-value">5점</span></div>
+                            <input type="range" id="weight-price" min="1" max="10" value="5" class="weight-slider" oninput="updateAll()">
+                        </div>
+                        <div class="weight-block">
+                            <div class="weight-label-row"><span>성능 · 만족도</span><span id="val-performance" class="weight-value">5점</span></div>
+                            <input type="range" id="weight-performance" min="1" max="10" value="5" class="weight-slider" oninput="updateAll()">
+                        </div>
+                        <div class="weight-block">
+                            <div class="weight-label-row"><span>휴대성 · 접근성</span><span id="val-portability" class="weight-value">5점</span></div>
+                            <input type="range" id="weight-portability" min="1" max="10" value="5" class="weight-slider" oninput="updateAll()">
+                        </div>
+                        <div class="weight-block">
+                            <div class="weight-label-row"><span>디자인 · 비주얼</span><span id="val-design" class="weight-value">5점</span></div>
+                            <input type="range" id="weight-design" min="1" max="10" value="5" class="weight-slider" oninput="updateAll()">
+                        </div>
+                        <div class="weight-block">
+                            <div class="weight-label-row"><span>부가기능 · 감성</span><span id="val-extra" class="weight-value">5점</span></div>
+                            <input type="range" id="weight-extra" min="1" max="10" value="5" class="weight-slider" oninput="updateAll()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card chart-card">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+
+            <div class="col">
+                <div class="ranking-section">
+                    <h2 style="font-size:1.125rem; font-weight:600;">실시간 가중치 적용 랭킹</h2>
+                    <div id="ranking-list" class="ranking-list">
+                        <p class="ranking-placeholder">상단의 'AI 연성' 버튼을 누르면 실시간 데이터가 나타납니다.</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </section>
+
+    <script>
+// 후보별 색상 팔레트 (1번 후보: 골드, 2번 후보: 민트/틸, 3번 후보: 인디고/블루)
+        const PALETTE = [
+            { border: '#fbbf24', fill: 'rgba(251, 191, 36, 0.3)' },  // 골드 / 앰버
+            { border: '#2dd4bf', fill: 'rgba(45, 212, 191, 0.3)' },  // 티얼 / 민트
+            { border: '#818cf8', fill: 'rgba(129, 140, 248, 0.3)' }   // 블루 퍼플
+        ];
+
+        let currentData = [
+            { name: "예시 후보 A", stats: [7, 8, 6, 7, 5], pro: "장점 예시", con: "단점 예시", reason: "추천 사유 예시" },
+            { name: "예시 후보 B", stats: [6, 9, 5, 8, 7], pro: "장점 예시", con: "단점 예시", reason: "추천 사유 예시" },
+            { name: "예시 후보 C", stats: [8, 6, 9, 5, 6], pro: "장점 예시", con: "단점 예시", reason: "추천 사유 예시" }
+        ];
+
+        let chart;
+
+        function showResultView() {
+            // 결과 화면 전환 시 search-mode 해제 (스크롤 허용)
+            document.body.classList.remove('search-mode');
+            document.getElementById('view-search').classList.add('hidden');
+            document.getElementById('view-result').classList.remove('hidden');
+            if (chart) {
+                setTimeout(() => chart.resize(), 0);
+            }
+        }
+
+        function showSearchView() {
+            // 첫 화면 전환 시 search-mode 복구 (스크롤 완전 차단)
+            document.body.classList.add('search-mode');
+            document.getElementById('view-result').classList.add('hidden');
+            document.getElementById('view-search').classList.remove('hidden');
+        }
+        
+        function initChart() {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['가격 · 비용', '성능 · 만족도', '휴대성 · 접근성', '디자인 · 비주얼', '부가기능 · 감성'],
+                    datasets: currentData.map((d, i) => ({
+                        label: d.name,
+                        data: d.stats,
+                        borderColor: PALETTE[i].border,
+                        backgroundColor: PALETTE[i].fill,
+                        borderWidth: 2.5,
+                        pointBackgroundColor: PALETTE[i].border,
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }))
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 10,
+                            angleLines: { color: 'rgba(255, 255, 255, 0.15)' },
+                            grid: { color: 'rgba(255, 255, 255, 0.15)' },
+                            pointLabels: { font: { size: 12, weight: '600' }, color: '#d1d5db' },
+                            ticks: { display: false, stepSize: 2 }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#f3f4f6', usePointStyle: true, pointStyle: 'circle', padding: 16 }
+                        }
+                    }
+                }
+            });
+        }
+
+        async function fetchAiData() {
+            const query = document.getElementById('search-query').value;
+            const btn = document.getElementById('btn-submit');
+            const loadingText = document.getElementById('loading-text');
+            const selectedModel = "gemini-3-flash-preview";
+
+            btn.disabled = true;
+            loadingText.classList.remove('hidden');
+
+            try {
+                const response = await fetch('https://asia-northeast3-died-by-spec-ai-mussang.cloudfunctions.net/compareApi', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, model: selectedModel })
+                });
+
+                const resData = await response.json();
+
+                if (!response.ok) {
+                    alert(`🚨 서버 에러!\n\n메시지: ${resData.error}`);
+                    return;
+                }
+
+                currentData = resData.data;
+
+                currentData.forEach((d, i) => {
+                    chart.data.datasets[i].label = d.name;
+                    chart.data.datasets[i].data = d.stats;
+                });
+
+                updateAll();
+                showResultView();
+
+            } catch (error) {
+                console.error(error);
+                alert(`🚨 오류 발생: ${error.message}\n다시 한번 버튼을 눌러주세요.`);
+            } finally {
+                btn.disabled = false;
+                loadingText.classList.add('hidden');
+            }
+        }
+
+        function updateAll() {
+            const wPrice = parseInt(document.getElementById('weight-price').value);
+            const wPerf = parseInt(document.getElementById('weight-performance').value);
+            const wPort = parseInt(document.getElementById('weight-portability').value);
+            const wDesi = parseInt(document.getElementById('weight-design').value);
+            const wExtr = parseInt(document.getElementById('weight-extra').value);
+
+            document.getElementById('val-price').innerText = wPrice + '점';
+            document.getElementById('val-performance').innerText = wPerf + '점';
+            document.getElementById('val-portability').innerText = wPort + '점';
+            document.getElementById('val-design').innerText = wDesi + '점';
+            document.getElementById('val-extra').innerText = wExtr + '점';
+
+            const weights = [wPrice, wPerf, wPort, wDesi, wExtr];
+            
+            const ranked = currentData.map(item => {
+                let score = 0;
+                for(let i=0; i<5; i++) { score += item.stats[i] * weights[i]; }
+                return { ...item, score };
+            }).sort((a, b) => b.score - a.score);
+
+            currentData.forEach((d, i) => {
+                chart.data.datasets[i].label = d.name;
+                chart.data.datasets[i].data = d.stats;
+            });
+            chart.update();
+
+            const listDiv = document.getElementById('ranking-list');
+            listDiv.innerHTML = '';
+            
+            ranked.forEach((item, index) => {
+                const colorIdx = currentData.findIndex(d => d.name === item.name);
+                const accent = PALETTE[colorIdx]?.border || '#818cf8';
+                listDiv.innerHTML += `
+                    <div class="rank-card" style="border-left-color: ${accent};">
+                        <div class="rank-card-header">
+                            <span class="rank-card-title">${index + 1}위 : ${item.name}</span>
+                            <span class="rank-card-score">${item.score}점</span>
+                        </div>
+                        <p class="rank-card-reason">${item.reason}</p>
+                        <div class="rank-card-details">
+                            <div><span class="icon-pro">👍</span> ${item.pro}</div>
+                            <div><span class="icon-con">👎</span> ${item.con}</div>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        window.onload = () => { initChart(); updateAll(); };
+    </script>
+</body>
+</html>
