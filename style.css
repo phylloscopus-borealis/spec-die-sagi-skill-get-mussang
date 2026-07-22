@@ -33,19 +33,42 @@ html, body {
     --color-title: #ffffff;
 }
 
+/* ===== HTML / BODY (모바일 자연스러운 스크롤 허용) ===== */
+html {
+    /* 옆으로 흔들리는 좌우 스크롤만 막고, 위아래 스크롤은 100% 허용 */
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
 body {
-    /* 모바일 가변 주소창에 맞춰 화면 높이에 배경 고정 */
-    background: linear-gradient(to bottom, var(--color-bg-start), var(--color-bg-end));
-    background-attachment: fixed; /* 핵심: 배경을 화면 뷰포트에 꽉 채워 고정 (스크롤해도 배경 안 끊김) */
+    /* 스크롤 제한을 전부 해제하여 모바일 터치 스크롤 활성화 */
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* 아이폰 부드러운 스크롤 */
     
     min-height: 100vh;
-    min-height: 100dvh; /* 모바일 동적 뷰포트 높이(Dynamic Viewport Height) 최신 지원 */
+    min-height: 100dvh;
     
     color: var(--text-main);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
     margin: 0;
     padding: 1.5rem;
     box-sizing: border-box;
+    position: relative;
+}
+
+/* 모바일 스크롤을 방해하지 않는 깔끔한 배경 고정 방식 */
+body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: linear-gradient(to bottom, var(--color-bg-start), var(--color-bg-end));
+    z-index: -1; /* 내용물 뒤로 배치 */
+    pointer-events: none; /* 터치 이벤트를 완전히 통과시킴 */
 }
 
 body.search-mode {
