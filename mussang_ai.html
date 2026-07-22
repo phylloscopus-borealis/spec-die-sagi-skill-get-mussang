@@ -33,13 +33,15 @@
         const auth = getAuth(app);
         const googleProvider = new GoogleAuthProvider();
 
-        // 전역 스코프에서 현재 로그인 유저 정보 참조 가능하도록 설정
         window.currentUser = null;
 
+        // 화면 UI (텍스트 및 버튼) 업데이트 함수
         function updateAuthUI(user) {
             const statusEl = document.getElementById('auth-status');
             const loginBtn = document.getElementById('btn-google-login');
             const logoutBtn = document.getElementById('btn-logout');
+
+            if (!statusEl) return;
 
             if (!user) {
                 statusEl.innerText = '로그인 확인 중...';
@@ -50,49 +52,71 @@
 
             if (user.isAnonymous) {
                 statusEl.innerText = '게스트로 이용 중';
-                loginBtn.classList.remove('hidden');
-                logoutBtn.classList.add('hidden');
+                if (loginBtn) loginBtn.classList.remove('hidden');
+                if (logoutBtn) logoutBtn.classList.add('hidden');
             } else {
                 const name = user.displayName || user.email || '회원';
                 statusEl.innerText = `${name}님으로 로그인됨`;
-                loginBtn.classList.add('hidden');
-                logoutBtn.classList.remove('hidden');
+                if (loginBtn) loginBtn.classList.add('hidden');
+                if (logoutBtn) logoutBtn.classList.remove('hidden');
             }
         }
 
+        // Auth 상태 변경 감지
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 updateAuthUI(user);
             } else {
-                // 로그인된 사람이 아무도 없으면 익명으로 자동 로그인
+                // 로그인된 계정이 없으면 게스트(익명)로 자동 로그인
                 signInAnonymously(auth).catch((err) => {
                     console.error('익명 로그인 실패', err);
-                    document.getElementById('auth-status').innerText = '로그인 오류 (새로고침 해주세요)';
+                    const statusEl = document.getElementById('auth-status');
+                    if (statusEl) statusEl.innerText = '로그인 오류 (새로고침 해주세요)';
                 });
             }
         });
 
-        // 구글 로그인 버튼 클릭 시 실행 (게스트 데이터 유지 연동 지원)
+        // 구글 로그인 버튼 클릭 시 실행
         window.handleGoogleLogin = async function () {
             try {
                 if (auth.currentUser && auth.currentUser.isAnonymous) {
-                    await linkWithPopup(auth.currentUser, googleProvider);
+                    try {
+                        // 게스트 상태였다면 → 구글 계정에 "연결"
+                        await linkWithPopup(auth.currentUser, googleProvider);
+                    } catch (linkError) {
+                        // 이미 기존에 가입된 구글 계정이 있는 경우 일반 구글 로그인 실행
+                        if (linkError.code === 'auth/credential-already-in-use' || linkError.code === 'auth/email-already-in-use') {
+                            await signInWithPopup(auth, googleProvider);
+                        } else {
+                            throw linkError;
+                        }
+                    }
                 } else {
                     await signInWithPopup(auth, googleProvider);
                 }
+
+                // ★ 중요: 로그인/연동 성공 즉시 UI 업데이트를 강제로 실행합니다!
+                if (auth.currentUser) {
+                    updateAuthUI(auth.currentUser);
+                }
+
             } catch (err) {
-                if (err.code === 'auth/credential-already-in-use') {
-                    await signInWithPopup(auth, googleProvider);
-                } else {
-                    console.error('구글 로그인 실패', err);
-                    alert('구글 로그인에 실패했어요. 다시 시도해주세요.');
+                console.error('구글 로그인 실패', err);
+                if (err.code === 'auth/popup-closed-by-user') {
+                    return; // 사용자가 팝업을 닫은 경우는 경고창 생략
                 }
+                alert(`구글 로그인에 실패했어요.\n(${err.message || '다시 시도해주세요.'})`);
             }
         };
 
+        // 로그아웃 클릭 시 실행
         window.handleLogout = async function () {
-            await signOut(auth);
-            // 로그아웃 후에는 익명(게스트)으로 자동 재전환됨
+            try {
+                await signOut(auth);
+                // signOut이 완료되면 onAuthStateChanged가 실행되어 자동으로 게스트 로그인으로 전환됩니다.
+            } catch (err) {
+                console.error('로그아웃 실패', err);
+            }
         };
     </script>
 </head>
@@ -349,3 +373,8 @@
     </script>
 </body>
 </html>
+
+
+
+
+
