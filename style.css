@@ -1,113 +1,91 @@
 @font-face {
-    font-family: 'Rebecca';
-    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2210-EF@1.0/EF_Rebecca.woff2') format('woff2');
+    font-family: 'Cafe24ClassicType';
+    src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2210-2@1.0/Cafe24ClassicType-Regular.woff2') format('woff2');
     font-weight: normal;
     font-display: swap;
 }
 
-* {
-    box-sizing: border-box;
-}
-
-html, body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-}
-
-/* ===== 🏆 톤다운된 고급 샴페인 골드 테마 ===== */
+/* ===== 컬러 팔레트 (통일) ===== */
 :root {
-    --color-primary: #e2c47c;       /* 덜 노랗고 차분한 샴페인 골드 */
-    --color-primary-soft: #c8a961;  /* 은은한 앤티크 골드 */
-    --color-accent: #edd89f;        /* 부드럽고 옅은 페일 골드 */
-    --color-grad-start: #a88438;    /* 차분한 매트 골드 */
-    --color-grad-end: #d6b25e;      /* 은빛 감성의 샴페인 골드 */
-    
-    --color-bg-start: #000000;
-    --color-bg-end: #111827;
-    
-    --text-main: #ffffff;
-    --text-sub: #9ca3af;
-    --card-bg: #1f2937;
-    --card-border: #374151;
-    --color-title: #ffffff;        /* 메인 제목 흰색 지정 */
+    --color-primary: #5a0283;       /* 진보라 - 헤더 */
+    --color-primary-soft: #7c3aed;  /* 연보라 - 보조 강조 */
+    --color-accent: #2f1896;        /* 마젠타 - 포커스/보더 */
+    --color-grad-start: #2c77e7;    /* 그라데이션 시작 (파랑) */
+    --color-grad-end: #5934af;      /* 그라데이션 끝 (보라) */
+    --color-bg-start: #f2f0fa;
+    --color-bg-end: #c8e1e9;
 }
 
+/* ===== 기본 레이아웃 ===== */
 body {
-    background: linear-gradient(to bottom, var(--color-bg-start), var(--color-bg-end));
-    color: var(--text-main);
-    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    min-height: 100vh;
+    background: linear-gradient(to right, var(--color-bg-start), var(--color-bg-end));
+    color: #111827;
     padding: 1.5rem;
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    margin: 0;  
 }
-
-body.search-mode {
-    height: 100vh;
-    overflow: hidden !important;
-    display: flex;
-    flex-direction: column;
-    padding: 1rem;
-}
-
+ 
 header {
-    text-align: center;
-    flex-shrink: 0;
+    margin-bottom: 2rem;
 }
 
-.main-logo {
-    max-height: 24vh;
-    max-width: 180px;
-    aspect-ratio: 1 / 1;
-    display: block;
-    margin: 1% auto 2rem auto;
-    background-color: #000000;
-    border-radius: 12px;
-    object-fit: contain;
+.auth-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
 }
 
-/* header h1 수정 */
+.auth-status {
+    font-size: 0.8125rem;
+    color: #6b7280;
+}
+
+.btn-google,
+.btn-logout {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.35rem 0.75rem;
+    border-radius: 9999px;
+    cursor: pointer;
+    border: 1px solid #e5e7eb;
+    background-color: #ffffff;
+}
+
+.btn-google {
+    color: var(--color-grad-end);
+}
+
+.btn-google:hover {
+    background-color: #f3e8fd;
+}
+
+.btn-logout {
+    color: #6b7280;
+}
+
+.btn-logout:hover {
+    background-color: #f3f4f6;
+}
+
 header h1 {
-    font-family: 'Rebecca', cursive;
-    color: #ffffff;
-    font-size: clamp(1rem, 2vw, 1.4rem); /* 화면 크기에 맞추어 유연하게 조절 */
-    font-weight: 700;
-    text-align: center;       /* flex 대신 텍스트 정렬 사용 */
-    display: block;            /* <a> 태그와 일반 텍스트가 한 문장으로 이어지도록 설정 */
-    word-break: keep-all;      /* 단어 단위로 깔끔하게 줄바꿈되도록 설정 */
-    line-height: 1.5;
-    margin: 0;
-}
-
-/* <a> 태그가 인라인 텍스트로 자연스럽게 섞이도록 지정 */
-header h1 a {
-    display: inline;
-    text-decoration: none;
-}
-
-/* 포인트가 되는 강조 텍스트만 은은한 샴페인 골드 적용 */
-.highlight1 {
+    font-family: 'Cafe24ClassicType', cursive;
     color: var(--color-primary);
-    font-size: clamp(1.7rem, 3vw, 2rem);
+    font-size: 2rem;  
     font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.highlight2 {
-    color: var(--color-accent);
-    font-size: clamp(2.25rem, 3.7vw, 2.5rem);
-    font-weight: 700;
-}
-
+/* ===== 화면 전환 (검색 화면 ↔ 비교 화면) ===== */
 .view {
     animation: fadeIn 0.35s ease;
 }
 
-/* 요소 숨김 강제 지정 */
-.hidden {
-    display: none !important;
-}
-
 .view.hidden {
-    display: none !important;
+    display: none;
 }
 
 @keyframes fadeIn {
@@ -115,27 +93,18 @@ header h1 a {
     to { opacity: 1; transform: translateY(0); }
 }
 
-body.search-mode #view-search {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-}
-
 .search-view-wrap {
-    width: 100%;
-    max-width: 36rem;
+    max-width: 40rem;
+    margin: 3rem auto 0;
 }
 
 .btn-back {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    background-color: var(--card-bg);
-    color: #ffffff;
-    border: 1px solid var(--card-border);
+    background-color: #ffffff;
+    color: var(--color-grad-end);
+    border: 1px solid #e5e7eb;
     padding: 0.5rem 1rem;
     border-radius: 0.75rem;
     font-weight: 700;
@@ -145,7 +114,6 @@ body.search-mode #view-search {
     max-width: 72rem;
     margin-left: auto;
     margin-right: auto;
-    transition: background-color 0.2s ease;
 }
 
 .btn-back-row {
@@ -154,7 +122,7 @@ body.search-mode #view-search {
 }
 
 .btn-back:hover {
-    background-color: #374151;
+    background-color: #f3e8fd;
 }
 
 main {
@@ -177,22 +145,50 @@ main {
     gap: 1.5rem;
 }
 
+/* ===== 카드 공통 ===== */
 .card {
-    background-color: var(--card-bg);
+    background-color: #ffffff;
     padding: 1.5rem;
     border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
-    border: 1px solid var(--card-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
 }
 
-/* ⚪ 소제목도 흰색으로 정돈 */
 .card h2 {
     font-size: 1.125rem;
     font-weight: 600;
     margin-bottom: 1rem;
-    color: #ffffff;
+    color: var(--color-primary);
 }
 
+/* ===== 모델 선택 ===== */
+.model-select-wrap {
+    margin-bottom: 1rem;
+}
+
+.model-select-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #6b7280;
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.model-select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    background-color: #f9fafb;
+    font-weight: 500;
+}
+
+.model-select:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+/* ===== 검색 입력 ===== */
 .search-row {
     display: flex;
     gap: 0.5rem;
@@ -201,15 +197,13 @@ main {
 .search-input {
     width: 100%;
     padding: 0.75rem;
-    background-color: #111827;
-    color: var(--text-main);
-    border: 1px solid var(--card-border);
+    border: 1px solid #e5e7eb;
     border-radius: 0.75rem;
     outline: none;
 }
 
 .search-input:focus {
-    box-shadow: 0 0 0 2px var(--color-primary);
+    box-shadow: 0 0 0 2px var(--color-accent);
 }
 
 .btn-submit {
@@ -225,7 +219,7 @@ main {
 }
 
 .btn-submit:hover {
-    filter: brightness(1.1);
+    filter: brightness(0.92);
 }
 
 .btn-submit:disabled {
@@ -235,10 +229,15 @@ main {
 
 .loading-text {
     font-size: 0.875rem;
-    color: var(--color-accent);
+    color: var(--color-grad-end);
     margin-top: 0.5rem;
 }
 
+.hidden {
+    display: none;
+}
+
+/* ===== 가중치 슬라이더 ===== */
 .weight-block + .weight-block {
     margin-top: 1rem;
 }
@@ -257,16 +256,17 @@ main {
 }
 
 .weight-value {
-    color: var(--color-primary);
+    color: var(--color-grad-end);
     font-weight: 700;
 }
 
 .weight-slider {
     width: 100%;
     cursor: pointer;
-    accent-color: var(--color-primary);
+    accent-color: var(--color-accent);
 }
 
+/* ===== 차트 카드 ===== */
 .chart-card {
     display: flex;
     justify-content: center;
@@ -274,6 +274,7 @@ main {
     height: 380px;
 }
 
+/* ===== 랭킹 리스트 ===== */
 .ranking-section {
     display: flex;
     flex-direction: column;
@@ -281,11 +282,11 @@ main {
 }
 
 .ranking-section h2 {
-    color: #ffffff;
+    color: var(--color-primary);
 }
 
 .ranking-placeholder {
-    color: var(--text-sub);
+    color: #9ca3af;
     font-size: 0.875rem;
 }
 
@@ -296,11 +297,10 @@ main {
 }
 
 .rank-card {
-    background-color: var(--card-bg);
+    background-color: #ffffff;
     padding: 1.25rem;
     border-radius: 1rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
-    border: 1px solid var(--card-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
     border-left: 4px solid var(--color-grad-end);
 }
 
@@ -314,12 +314,12 @@ main {
 
 .rank-card-title {
     font-size: 1.125rem;
-    color: var(--text-main);
+    color: #1f2937;
 }
 
 .rank-card-score {
-    background-color: rgba(226, 196, 124, 0.15);
-    color: var(--color-accent);
+    background-color: #f3e8fd;
+    color: var(--color-primary-soft);
     padding: 0.25rem 0.75rem;
     border-radius: 9999px;
     font-size: 0.875rem;
@@ -327,12 +327,11 @@ main {
 
 .rank-card-reason {
     font-size: 0.875rem;
-    color: var(--text-sub);
+    color: #6b7280;
     margin-bottom: 0.75rem;
-    background-color: #111827;
+    background-color: #f9fafb;
     padding: 0.625rem;
     border-radius: 0.5rem;
-    border: 1px solid #374151;
 }
 
 .rank-card-details {
@@ -340,15 +339,15 @@ main {
     flex-direction: column;
     gap: 0.25rem;
     font-size: 0.875rem;
-    color: #d1d5db;
+    color: #374151;
 }
 
 .icon-pro {
-    color: #34d399;
+    color: #10b981;
     font-weight: 700;
 }
 
 .icon-con {
-    color: #fb7185;
+    color: #f43f5e;
     font-weight: 700;
 }
