@@ -16,6 +16,7 @@
             GoogleAuthProvider,
             linkWithPopup,
             signInWithPopup,
+            signInWithCredential,
             signOut
         } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
 
@@ -35,7 +36,7 @@
 
         window.currentUser = null;
 
-        // 화면 UI (텍스트 및 버튼) 업데이트 함수
+        // UI(텍스트 및 버튼) 즉시 업데이트
         function updateAuthUI(user) {
             const statusEl = document.getElementById('auth-status');
             const loginBtn = document.getElementById('btn-google-login');
@@ -62,12 +63,11 @@
             }
         }
 
-        // Auth 상태 변경 감지
+        // 로그인 상태 자동 감지
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 updateAuthUI(user);
             } else {
-                // 로그인된 계정이 없으면 게스트(익명)로 자동 로그인
                 signInAnonymously(auth).catch((err) => {
                     console.error('익명 로그인 실패', err);
                     const statusEl = document.getElementById('auth-status');
@@ -76,17 +76,24 @@
             }
         });
 
-        // 구글 로그인 버튼 클릭 시 실행
+        // 구글 로그인 버튼 클릭
         window.handleGoogleLogin = async function () {
             try {
                 if (auth.currentUser && auth.currentUser.isAnonymous) {
                     try {
-                        // 게스트 상태였다면 → 구글 계정에 "연결"
+                        // 1. 게스트 상태라면 구글 계정에 연결 시도
                         await linkWithPopup(auth.currentUser, googleProvider);
                     } catch (linkError) {
-                        // 이미 기존에 가입된 구글 계정이 있는 경우 일반 구글 로그인 실행
+                        // 2. 이미 기존에 가입된 구글 계정인 경우
                         if (linkError.code === 'auth/credential-already-in-use' || linkError.code === 'auth/email-already-in-use') {
-                            await signInWithPopup(auth, googleProvider);
+                            // ⭐️ 핵심: 팝업을 또 띄우면 브라우저가 차단하므로,
+                            // 방금 선택한 팝업의 인증 정보(credential)로 팝업 없이 곧바로 로그인 처리!
+                            const credential = GoogleAuthProvider.credentialFromError(linkError);
+                            if (credential) {
+                                await signInWithCredential(auth, credential);
+                            } else {
+                                await signInWithPopup(auth, googleProvider);
+                            }
                         } else {
                             throw linkError;
                         }
@@ -95,25 +102,30 @@
                     await signInWithPopup(auth, googleProvider);
                 }
 
-                // ★ 중요: 로그인/연동 성공 즉시 UI 업데이트를 강제로 실행합니다!
+                // 로그인 성공 시 UI 즉시 반영 (새로고침 불필요)
                 if (auth.currentUser) {
                     updateAuthUI(auth.currentUser);
                 }
 
             } catch (err) {
-                console.error('구글 로그인 실패', err);
+                console.error('구글 로그인 최종 실패:', err);
+
                 if (err.code === 'auth/popup-closed-by-user') {
-                    return; // 사용자가 팝업을 닫은 경우는 경고창 생략
+                    return; // 사용자가 팝업 창을 직접 닫은 경우 실패 경고창 안 띄움
                 }
+
+                if (err.code === 'auth/unauthorized-domain') {
+                    alert('🚨 승인되지 않은 도메인입니다!\nFirebase 콘솔에서 현재 주소를 승인된 도메인에 추가해주세요.');
+                    return;
+                }
+
                 alert(`구글 로그인에 실패했어요.\n(${err.message || '다시 시도해주세요.'})`);
             }
         };
 
-        // 로그아웃 클릭 시 실행
         window.handleLogout = async function () {
             try {
                 await signOut(auth);
-                // signOut이 완료되면 onAuthStateChanged가 실행되어 자동으로 게스트 로그인으로 전환됩니다.
             } catch (err) {
                 console.error('로그아웃 실패', err);
             }
