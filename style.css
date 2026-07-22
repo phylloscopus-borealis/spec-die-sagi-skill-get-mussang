@@ -34,11 +34,18 @@ html, body {
 }
 
 body {
+    /* 모바일 가변 주소창에 맞춰 화면 높이에 배경 고정 */
     background: linear-gradient(to bottom, var(--color-bg-start), var(--color-bg-end));
+    background-attachment: fixed; /* 핵심: 배경을 화면 뷰포트에 꽉 채워 고정 (스크롤해도 배경 안 끊김) */
+    
+    min-height: 100vh;
+    min-height: 100dvh; /* 모바일 동적 뷰포트 높이(Dynamic Viewport Height) 최신 지원 */
+    
     color: var(--text-main);
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    min-height: 100vh;
+    margin: 0;
     padding: 1.5rem;
+    box-sizing: border-box;
 }
 
 body.search-mode {
