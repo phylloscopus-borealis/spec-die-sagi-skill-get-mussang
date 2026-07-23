@@ -19,6 +19,18 @@
             signInWithCredential,
             signOut
         } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-auth.js";
+        import {
+            getFirestore,
+            collection,
+            addDoc,
+            deleteDoc,
+            doc,
+            getDocs,
+            query,
+            where,
+            orderBy,
+            serverTimestamp
+        } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyBguMDBoNpY88I60rUSGCG67WgWdimhKRU",
@@ -32,7 +44,9 @@
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
+        const db = getFirestore(app);
         const googleProvider = new GoogleAuthProvider();
+        const VAULT_COLLECTION = "saved_comparisons";
 
         window.currentUser = null;
 
@@ -81,13 +95,9 @@
             try {
                 if (auth.currentUser && auth.currentUser.isAnonymous) {
                     try {
-                        // 1. 게스트 상태라면 구글 계정에 연결 시도
                         await linkWithPopup(auth.currentUser, googleProvider);
                     } catch (linkError) {
-                        // 2. 이미 기존에 가입된 구글 계정인 경우
                         if (linkError.code === 'auth/credential-already-in-use' || linkError.code === 'auth/email-already-in-use') {
-                            // ⭐️ 핵심: 팝업을 또 띄우면 브라우저가 차단하므로,
-                            // 방금 선택한 팝업의 인증 정보(credential)로 팝업 없이 곧바로 로그인 처리!
                             const credential = GoogleAuthProvider.credentialFromError(linkError);
                             if (credential) {
                                 await signInWithCredential(auth, credential);
@@ -102,7 +112,6 @@
                     await signInWithPopup(auth, googleProvider);
                 }
 
-                // 로그인 성공 시 UI 즉시 반영 (새로고침 불필요)
                 if (auth.currentUser) {
                     updateAuthUI(auth.currentUser);
                 }
@@ -111,7 +120,7 @@
                 console.error('구글 로그인 최종 실패:', err);
 
                 if (err.code === 'auth/popup-closed-by-user') {
-                    return; // 사용자가 팝업 창을 직접 닫은 경우 실패 경고창 안 띄움
+                    return;
                 }
 
                 if (err.code === 'auth/unauthorized-domain') {
@@ -130,6 +139,125 @@
                 console.error('로그아웃 실패', err);
             }
         };
+
+        // ===== 🎁 전리품 보관함 (Firestore CRUD) =====
+
+        // 현재 화면에 떠있는 결과(스탯 + 가중치)를 그대로 저장
+        window.saveCurrentComparison = async function () {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('로그인 정보를 확인하는 중이에요. 잠시 후 다시 시도해주세요.');
+                return;
+            }
+            if (!window.currentData || window.currentData.length === 0) {
+                alert('저장할 비교 결과가 없어요.');
+                return;
+            }
+
+            const btn = document.getElementById('btn-save-vault');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = '저장 중...';
+
+            try {
+                await addDoc(collection(db, VAULT_COLLECTION), {
+                    userId: user.uid,
+                    userName: user.displayName || (user.isAnonymous ? '게스트' : (user.email || '회원')),
+                    searchQuery: document.getElementById('search-query').value,
+                    aiResults: window.currentData,
+                    userWeights: window.getCurrentWeights(),
+                    createdAt: serverTimestamp()
+                });
+                btn.innerText = '✅ 저장 완료!';
+            } catch (err) {
+                console.error('저장 실패', err);
+                btn.innerText = originalText;
+                alert(`저장에 실패했어요.\n(${err.message})`);
+                btn.disabled = false;
+                return;
+            }
+
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }, 1500);
+        };
+
+        // 보관함 목록 불러오기
+        window.loadVaultItems = async function () {
+            const user = auth.currentUser;
+            const listEl = document.getElementById('vault-list');
+            if (!listEl) return;
+
+            if (!user) {
+                listEl.innerHTML = `<p class="vault-placeholder">로그인 정보를 확인하는 중이에요...</p>`;
+                return;
+            }
+
+            listEl.innerHTML = `<p class="vault-placeholder">불러오는 중...</p>`;
+
+            try {
+                const q = query(
+                    collection(db, VAULT_COLLECTION),
+                    where('userId', '==', user.uid),
+                    orderBy('createdAt', 'desc')
+                );
+                const snapshot = await getDocs(q);
+
+                if (snapshot.empty) {
+                    listEl.innerHTML = `<p class="vault-placeholder">아직 보관한 비교 결과가 없어요. 결과 화면에서 '전리품으로 보관하기'를 눌러보세요!</p>`;
+                    return;
+                }
+
+                listEl.innerHTML = '';
+                snapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const dateStr = data.createdAt?.toDate
+                        ? data.createdAt.toDate().toLocaleString('ko-KR', { dateStyle: 'medium', timeStyle: 'short' })
+                        : '방금 전';
+                    const topName = data.aiResults?.[0]?.name || '(이름 없음)';
+
+                    const card = document.createElement('div');
+                    card.className = 'vault-card';
+                    card.innerHTML = `
+                        <div class="vault-card-header">
+                            <span class="vault-card-query">"${data.searchQuery}"</span>
+                            <span class="vault-card-date">${dateStr}</span>
+                        </div>
+                        <p class="vault-card-top">🏆 1위: ${topName}</p>
+                        <div class="vault-card-actions">
+                            <button class="btn-vault-load" data-id="${docSnap.id}">불러오기</button>
+                            <button class="btn-vault-delete" data-id="${docSnap.id}">삭제</button>
+                        </div>
+                    `;
+                    listEl.appendChild(card);
+
+                    card.querySelector('.btn-vault-load').addEventListener('click', () => {
+                        window.loadSavedComparison(data);
+                    });
+                    card.querySelector('.btn-vault-delete').addEventListener('click', () => {
+                        window.deleteSavedComparison(docSnap.id);
+                    });
+                });
+
+            } catch (err) {
+                console.error('보관함 조회 실패', err);
+                // orderBy + where 조합은 Firestore 색인(index)이 필요할 수 있음.
+                // 콘솔 에러 메시지에 색인 생성 링크가 뜨면 그걸 눌러서 만들어야 함.
+                listEl.innerHTML = `<p class="vault-placeholder">불러오기에 실패했어요. 콘솔(F12)에 뜬 에러 메시지를 확인해주세요.<br>(색인 생성이 필요하다는 링크가 떴다면 그 링크를 눌러 색인을 만들어주세요)</p>`;
+            }
+        };
+
+        window.deleteSavedComparison = async function (docId) {
+            if (!confirm('이 보관 항목을 삭제할까요?')) return;
+            try {
+                await deleteDoc(doc(db, VAULT_COLLECTION, docId));
+                window.loadVaultItems();
+            } catch (err) {
+                console.error('삭제 실패', err);
+                alert(`삭제에 실패했어요.\n(${err.message})`);
+            }
+        };
     </script>
 </head>
 <body class="search-mode">
@@ -137,7 +265,11 @@
     <header>
         <img src="logo.png" alt="서비스 로고" class="main-logo">
         <h1>뭘 고를지 9시간째 고민하던 나, <a class="highlight1">AI가 그려주는 레이더 차트가</a> 실시간으로 보이는 <a class="highlight2">사기 스킬</a>을 얻고 무쌍 찍는 건에 대하여</h1>
-        
+
+        <div class="top-nav">
+            <button class="btn-vault-nav" onclick="showVaultView()">📦 내 전리품 보관함</button>
+        </div>
+
         <div id="auth-bar" class="auth-bar">
             <span id="auth-status" class="auth-status">로그인 확인 중...</span>
             <button id="btn-google-login" class="btn-google" onclick="handleGoogleLogin()">구글로 로그인</button>
@@ -171,6 +303,7 @@
     <section id="view-result" class="view hidden">
         <div class="btn-back-row">
             <button id="btn-back" class="btn-back" onclick="showSearchView()">← 다시 AI 연성하기</button>
+            <button id="btn-save-vault" class="btn-save-vault" onclick="saveCurrentComparison()">🎁 전리품으로 보관하기</button>
         </div>
 
         <main>
@@ -217,6 +350,19 @@
         </main>
     </section>
 
+    <!-- ===== 🎁 전리품 보관함 화면 ===== -->
+    <section id="view-vault" class="view hidden">
+        <div class="btn-back-row">
+            <button class="btn-back" onclick="showSearchView()">← 돌아가기</button>
+        </div>
+        <div class="vault-wrap">
+            <h2 class="vault-title">📦 내 전리품 보관함</h2>
+            <div id="vault-list" class="vault-list">
+                <p class="vault-placeholder">불러오는 중...</p>
+            </div>
+        </div>
+    </section>
+
     <script>
         // 샴페인 골드 테마 맞춤 팔레트 (1번: 샴페인 골드, 2번: 민트, 3번: 소프트 블루)
         const PALETTE = [
@@ -230,12 +376,30 @@
             { name: "예시 후보 B", stats: [6, 9, 5, 8, 7], pro: "장점 예시", con: "단점 예시", reason: "추천 사유 예시" },
             { name: "예시 후보 C", stats: [8, 6, 9, 5, 6], pro: "장점 예시", con: "단점 예시", reason: "추천 사유 예시" }
         ];
+        window.currentData = currentData; // Firestore 저장 코드에서 참조
 
         let chart;
 
+        // 현재 슬라이더 값들을 객체로 반환 (저장용)
+        window.getCurrentWeights = function () {
+            return {
+                price: parseInt(document.getElementById('weight-price').value),
+                performance: parseInt(document.getElementById('weight-performance').value),
+                portability: parseInt(document.getElementById('weight-portability').value),
+                design: parseInt(document.getElementById('weight-design').value),
+                extra: parseInt(document.getElementById('weight-extra').value)
+            };
+        };
+
+        function hideAllViews() {
+            document.getElementById('view-search').classList.add('hidden');
+            document.getElementById('view-result').classList.add('hidden');
+            document.getElementById('view-vault').classList.add('hidden');
+        }
+
         function showResultView() {
             document.body.classList.remove('search-mode');
-            document.getElementById('view-search').classList.add('hidden');
+            hideAllViews();
             document.getElementById('view-result').classList.remove('hidden');
             if (chart) {
                 setTimeout(() => chart.resize(), 0);
@@ -244,9 +408,45 @@
 
         function showSearchView() {
             document.body.classList.add('search-mode');
-            document.getElementById('view-result').classList.add('hidden');
+            hideAllViews();
             document.getElementById('view-search').classList.remove('hidden');
         }
+
+        function showVaultView() {
+            document.body.classList.remove('search-mode');
+            hideAllViews();
+            document.getElementById('view-vault').classList.remove('hidden');
+            window.loadVaultItems();
+        }
+        window.showVaultView = showVaultView;
+        window.showSearchView = showSearchView;
+        window.showResultView = showResultView;
+
+        // 보관함에서 '불러오기'를 눌렀을 때, 저장해둔 데이터로 결과 화면을 그대로 복원
+        window.loadSavedComparison = function (data) {
+            currentData = data.aiResults;
+            window.currentData = currentData;
+
+            document.getElementById('search-query').value = data.searchQuery || '';
+
+            if (data.userWeights) {
+                document.getElementById('weight-price').value = data.userWeights.price ?? 5;
+                document.getElementById('weight-performance').value = data.userWeights.performance ?? 5;
+                document.getElementById('weight-portability').value = data.userWeights.portability ?? 5;
+                document.getElementById('weight-design').value = data.userWeights.design ?? 5;
+                document.getElementById('weight-extra').value = data.userWeights.extra ?? 5;
+            }
+
+            currentData.forEach((d, i) => {
+                if (chart.data.datasets[i]) {
+                    chart.data.datasets[i].label = d.name;
+                    chart.data.datasets[i].data = d.stats;
+                }
+            });
+
+            updateAll();
+            showResultView();
+        };
         
         function initChart() {
             const ctx = document.getElementById('radarChart').getContext('2d');
@@ -315,6 +515,7 @@
                 }
 
                 currentData = resData.data;
+                window.currentData = currentData;
 
                 currentData.forEach((d, i) => {
                     chart.data.datasets[i].label = d.name;
@@ -355,8 +556,10 @@
             }).sort((a, b) => b.score - a.score);
 
             currentData.forEach((d, i) => {
-                chart.data.datasets[i].label = d.name;
-                chart.data.datasets[i].data = d.stats;
+                if (chart.data.datasets[i]) {
+                    chart.data.datasets[i].label = d.name;
+                    chart.data.datasets[i].data = d.stats;
+                }
             });
             chart.update();
 
@@ -385,8 +588,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
