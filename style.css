@@ -88,13 +88,13 @@ header {
     aspect-ratio: 1 / 1;
     display: block;
     margin: 1% auto 1.5rem auto;
-    background-color: #000000;
     border-radius: 12px;
     object-fit: contain;
+    z-index: 2;
 }
 
 header h1 {
-    font-family: 'Rebecca', cursive;
+    font-family: 'Rebecca', sans-serif;
     color: #ffffff;
     font-size: clamp(1rem, 2.2vw, 1.4rem);
     font-weight: 700;
@@ -162,25 +162,28 @@ header h1 a {
     color: var(--text-sub);
 }
 
+/* ===== Google 로그인 & 로그아웃 버튼 (금색 배경 + 검은색 글자) ===== */
 .btn-google,
 .btn-logout {
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 800;                        /* 글자가 또렷하게 보이도록 지정 */
     padding: 0.35rem 0.85rem;
     border-radius: 9999px;
     cursor: pointer;
     transition: all 0.2s ease;
+    background-color: var(--color-primary); /* 샴페인 골드 배경 (#e2c47c) */
+    color: #111827;                          /* 진한 검은색 글자 */
+    border: none;                             /* 기존 테두리 제거 */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.btn-google {
-    background-color: transparent;
-    color: var(--color-primary);
-    border: 1px solid var(--color-primary-soft);
-}
-
-.btn-google:hover {
-    background-color: rgba(226, 196, 124, 0.15);
-    border-color: var(--color-primary);
+/* 마우스 호버(오버) 시 효과 */
+.btn-google:hover,
+.btn-logout:hover {
+    background-color: var(--color-accent);  /* 마우스 올렸을 때 더 밝은 골드 */
+    color: #000000;                          /* 선명한 검은색 */
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(226, 196, 124, 0.3);
 }
 
 .btn-logout {
@@ -637,4 +640,147 @@ main {
 .btn-vault-delete:hover {
     background-color: rgba(251, 113, 133, 0.15);
     border-color: #fb7185;
+}
+
+/* ===== 별자리 및 별 배경 효과 ===== */
+
+/* 작은 별이 많은 하늘 */
+.stars-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    z-index: 1;
+    pointer-events: none;
+
+    background-image:
+        radial-gradient(0.6px 0.6px at 12px 18px, rgba(255,255,255,.95) 100%, transparent),
+        radial-gradient(0.8px 0.8px at 42px 91px, rgba(255,255,255,.75) 100%, transparent),
+        radial-gradient(0.5px 0.5px at 83px 37px, rgba(255,255,255,.85) 100%, transparent),
+        radial-gradient(1px 1px at 121px 62px, rgba(255,255,255,.55) 100%, transparent),
+        radial-gradient(0.7px 0.7px at 176px 24px, rgba(255,255,255,.8) 100%, transparent),
+        radial-gradient(0.6px 0.6px at 205px 112px, rgba(255,255,255,.9) 100%, transparent),
+        radial-gradient(0.9px 0.9px at 246px 53px, rgba(255,255,255,.65) 100%, transparent),
+        radial-gradient(0.5px 0.5px at 18px 165px, rgba(255,255,255,.9) 100%, transparent),
+        radial-gradient(0.8px 0.8px at 64px 202px, rgba(255,255,255,.7) 100%, transparent),
+        radial-gradient(1.1px 1.1px at 97px 149px, rgba(255,255,255,.45) 100%, transparent),
+        radial-gradient(0.5px 0.5px at 142px 189px, rgba(255,255,255,.9) 100%, transparent),
+        radial-gradient(0.7px 0.7px at 186px 173px, rgba(255,255,255,.75) 100%, transparent),
+        radial-gradient(0.6px 0.6px at 229px 207px, rgba(255,255,255,.95) 100%, transparent),
+        radial-gradient(0.8px 0.8px at 273px 131px, rgba(255,255,255,.65) 100%, transparent),
+        radial-gradient(0.5px 0.5px at 298px 76px, rgba(255,255,255,.8) 100%, transparent),
+        radial-gradient(1px 1px at 327px 218px, rgba(255,255,255,.55) 100%, transparent),
+        radial-gradient(0.6px 0.6px at 361px 41px, rgba(255,255,255,.9) 100%, transparent),
+        radial-gradient(0.7px 0.7px at 394px 182px, rgba(255,255,255,.7) 100%, transparent),
+        radial-gradient(0.5px 0.5px at 418px 97px, rgba(255,255,255,.95) 100%, transparent),
+        radial-gradient(0.9px 0.9px at 447px 154px, rgba(255,255,255,.5) 100%, transparent),
+        radial-gradient(0.6px 0.6px at 476px 33px, rgba(255,255,255,.85) 100%, transparent),
+        radial-gradient(0.8px 0.8px at 509px 201px, rgba(255,255,255,.75) 100%, transparent),
+        radial-gradient(0.5px 0.5px at 542px 66px, rgba(255,255,255,.9) 100%, transparent),
+        radial-gradient(1.2px 1.2px at 571px 122px, rgba(255,255,255,.35) 100%, transparent),
+        radial-gradient(0.6px 0.6px at 603px 184px, rgba(255,255,255,.85) 100%, transparent);
+
+    background-size: 640px 240px;
+    background-repeat: repeat;
+    opacity: .85;
+}
+
+/* 좌상단, 우상단 별자리 이미지 공통 스타일 */
+.constellation-left, 
+.constellation-right {
+    position: absolute;
+    top: 30px; /* 위에서부터의 간격 */
+    width: 200px; /* 별자리 이미지 크기 (원하는 대로 조절 가능) */
+    height: auto;
+    z-index: 2; /* 별 배경 위, 텍스트 아래 */
+    opacity: 0.8; /* 타이틀을 방해하지 않게 살짝 투명하게 */
+    pointer-events: none;
+    /* 만약 이미지 배경이 검은색이라면 mix-blend-mode: screen; 을 추가하면 검은색 배경이 투명해집니다 */
+    mix-blend-mode: screen; 
+}
+
+/* 처녀자리 (좌상단) */
+.constellation-left {
+    left: 20%; /* 왼쪽에서부터의 간격 */
+}
+
+/* 물고기자리 (우상단) */
+.constellation-right {
+    right: 30%; /* 오른쪽에서부터의 간격 */
+    padding-top: 30px; /* 위쪽 여백 추가 */
+}
+
+@media (max-width: 768px) {
+    .constellation-right {
+        right: 5%;
+        margin: 0 auto;
+        padding-top: 30px; /* 위쪽 여백 추가 */
+    }
+    .constellation-left {
+        left: 5%;
+        margin: 0 auto;
+        padding-top: 30px; /* 위쪽 여백 추가 */
+    }
+    
+}
+
+/* 기존 타이틀 텍스트가 별자리 위로 올라오도록 z-index 확인/추가 */
+.hero-content {
+    position: relative;
+    z-index: 3;
+}
+
+/* ===== 검색 카드 헤더 & 보관함 버튼 배치 ===== */
+.search-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.search-card-header h2 {
+    margin: 0; /* 제목의 기본 여백 제거 후 정렬 */
+}
+
+/* 내 전리품 보관함 버튼 스타일 */
+.btn-vault-nav {
+    background-color: #111827;
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary-soft);
+    padding: 0.5rem 1.25rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    white-space: nowrap;
+}
+
+.btn-vault-nav:hover {
+    background-color: rgba(226, 196, 124, 0.15);
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+}
+
+/* 모바일 전용 보관함 감싸는 영역 */
+.mobile-vault-wrap {
+    display: none;
+    text-align: center;
+    margin-top: 1.25rem;
+}
+
+/* ===== 반응형 미디어 쿼리 (모바일) ===== */
+@media (max-width: 640px) {
+    /* 데스크톱용 헤더 내 버튼 숨김 */
+    .desktop-vault-btn {
+        display: none !important;
+    }
+
+    /* 모바일용 검색 카드 아래 버튼 표시 */
+    .mobile-vault-wrap {
+        display: block;
+    }
 }
