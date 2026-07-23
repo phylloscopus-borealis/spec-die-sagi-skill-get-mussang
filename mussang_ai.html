@@ -412,6 +412,12 @@
             }
         }
 
+        function showSearchView() {
+            document.body.classList.add('search-mode');
+            hideAllViews();
+            document.getElementById('view-search').classList.remove('hidden');
+        }
+
         function showVaultView() {
             document.body.classList.remove('search-mode');
             hideAllViews();
