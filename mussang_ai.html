@@ -205,7 +205,7 @@
                 const snapshot = await getDocs(q);
 
                 if (snapshot.empty) {
-                    listEl.innerHTML = `<p class="vault-placeholder">아직 보관한 비교 결과가 없어요. 결과 화면에서 '전리품으로 보관하기'를 눌러보세요!</p>`;
+                    listEl.innerHTML = `<p class="vault-placeholder">아직 보관한 비교 결과가 없어요. 결과 화면에서 '전리품 보관하기'를 눌러보세요!</p>`;
                     return;
                 }
 
@@ -303,7 +303,10 @@
     <section id="view-result" class="view hidden">
         <div class="btn-back-row">
             <button id="btn-back" class="btn-back" onclick="showSearchView()">← 다시 AI 연성하기</button>
-            <button id="btn-save-vault" class="btn-save-vault" onclick="saveCurrentComparison()">전리품으로 보관하기</button>
+            <div class="btn-action-group">
+                <button class="btn-vault-nav" onclick="showVaultView()">내 전리품 보관함</button>
+                <button id="btn-save-vault" class="btn-save-vault" onclick="saveCurrentComparison()">전리품 보관하기</button>
+            </div>
         </div>
 
         <main>
@@ -353,7 +356,10 @@
     <!-- ===== 전리품 보관함 화면 ===== -->
     <section id="view-vault" class="view hidden">
         <div class="btn-back-row">
-            <button class="btn-back" onclick="showSearchView()">← 돌아가기</button>
+            <div class="btn-action-group">
+                <button class="btn-back" onclick="showSearchView()">← AI 연성으로</button>
+                <button id="btn-back-to-result" class="btn-back hidden" onclick="showResultView()">← 결과 화면으로</button>
+            </div>
         </div>
         <div class="vault-wrap">
             <h2 class="vault-title">《&nbsp; 전리품 보관함 &nbsp;》</h2>
@@ -406,10 +412,22 @@
             }
         }
 
-        function showSearchView() {
-            document.body.classList.add('search-mode');
+        function showVaultView() {
+            document.body.classList.remove('search-mode');
             hideAllViews();
-            document.getElementById('view-search').classList.remove('hidden');
+            
+            // 결과 데이터가 존재하는지 확인하여 '결과 화면으로' 버튼 노출 여부 결정
+            const btnBackToResult = document.getElementById('btn-back-to-result');
+            if (btnBackToResult) {
+                if (window.currentData && window.currentData.length > 0) {
+                    btnBackToResult.classList.remove('hidden');
+                } else {
+                    btnBackToResult.classList.add('hidden');
+                }
+            }
+
+            document.getElementById('view-vault').classList.remove('hidden');
+            window.loadVaultItems();
         }
 
         function showVaultView() {
