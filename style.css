@@ -296,7 +296,7 @@ body.search-mode #view-search {
     color: #ffffff;
     border: none;
     padding: 0.55rem 1.25rem;
-    border-radius: 0.75rem;
+    border-radius: 9999px;
     font-weight: 700;
     font-size: 0.875rem;
     cursor: pointer;

@@ -403,10 +403,16 @@
             document.getElementById('view-vault').classList.add('hidden');
         }
 
+    // 현재 활성화된 결과 데이터가 있는지 추적하는 변수
+        window.hasActiveResult = false;
+
         function showResultView() {
             document.body.classList.remove('search-mode');
             hideAllViews();
             document.getElementById('view-result').classList.remove('hidden');
+            
+            window.hasActiveResult = true; // 결과창 진입 기록 남기기
+            
             if (chart) {
                 setTimeout(() => chart.resize(), 0);
             }
@@ -422,23 +428,16 @@
             document.body.classList.remove('search-mode');
             hideAllViews();
             
-            // 결과 데이터가 존재하는지 확인하여 '결과 화면으로' 버튼 노출 여부 결정
             const btnBackToResult = document.getElementById('btn-back-to-result');
             if (btnBackToResult) {
-                if (window.currentData && window.currentData.length > 0) {
+                // 결과창(데이터)이 띄워진 적이 있을 때만 '결과 화면으로' 버튼 노출
+                if (window.hasActiveResult) {
                     btnBackToResult.classList.remove('hidden');
                 } else {
                     btnBackToResult.classList.add('hidden');
                 }
             }
 
-            document.getElementById('view-vault').classList.remove('hidden');
-            window.loadVaultItems();
-        }
-
-        function showVaultView() {
-            document.body.classList.remove('search-mode');
-            hideAllViews();
             document.getElementById('view-vault').classList.remove('hidden');
             window.loadVaultItems();
         }
